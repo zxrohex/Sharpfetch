@@ -18,24 +18,22 @@ namespace Sharpfetch.CLI.Commands
 {
     public class BaseCommand : AsyncCommand
     {
-        public override async Task<int> ExecuteAsync(CommandContext context)
+        public override async Task<int> ExecuteAsync(CommandContext context, CancellationToken cancellationToken)
         {
-            SystemInfo info = new SystemInfo();
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                WindowsSystemInformation windowsSystemInformation = new WindowsSystemInformation();
 
-   
-            Panel logoPanel = new Panel(new CanvasImage(info.OSPlatform == OSPlatform.Windows ? Resources.WindowsLogo64px : Resources.LinuxLogo64px)
-                .Mutate(m => m.Resize(20, 20, KnownResamplers.NearestNeighbor)))
-                .NoBorder();
+                windowsSystemInformation.Print();
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                LinuxSystemInformation linuxSystemInformation = new LinuxSystemInformation();
+                linuxSystemInformation.Print();
+            }
+           
 
-            Panel contentPanel = new Panel(info.ToConsoleText()).NoBorder().Expand();
 
-            var columns = new Columns(logoPanel, contentPanel);
-
-            columns.Collapse();
-
-            AnsiConsole.Write(columns);
-
-            
 
             return 0;
         }

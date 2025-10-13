@@ -1,122 +1,182 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Diagnostics;
-using System.Reflection;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 
 using Hardware.Info;
 
 using Sharpfetch.CLI;
+using Sharpfetch.Core.Helpers;
+using Sharpfetch.Properties;
+
+using SixLabors.ImageSharp.Processing;
 
 using Spectre.Console;
 
 namespace Sharpfetch.Core
 {
-    public class SystemInfo : CLIObject
+    public abstract class SystemInformation
     {
-        public string UserName { get; private set; }
+        public string MachineName => Environment.MachineName;
 
-        public string ComputerName { get; private set; }
+        public string UserName => Environment.UserName;
 
-        public OSPlatform OSPlatform => OperatingSystem.IsWindows() ? OSPlatform.Windows : OperatingSystem.IsLinux() ? OSPlatform.Linux : OperatingSystem.IsMacOS() ? OSPlatform.OSX : OSPlatform.FreeBSD;
+        public string OS => RuntimeInformation.OSDescription;
 
-        public string OSName { get; private set; }
+        public string OSVersion =>  hardwareInformation.OperatingSystem.Version.ToString();
 
-        public string OSVersion { get; private set; }
+        public string Architecture => RuntimeInformation.OSArchitecture.ToString();
 
-        public string OSArchitecture { get; private set; }
+        public TimeSpan Uptime => TimeSpan.FromMilliseconds(Environment.TickCount64);
 
-        public string OSDescription { get; private set; }
+        public string? CPUDescription => hardwareInformation.CpuList?.FirstOrDefault()?.Name.TrimEnd();
 
-        public TimeSpan OSUptime { get; private set; }
+        public abstract double CPUSpeed { get; }
 
-        public string Resolution { get; private set; }
+        public int CPUCores => (int?)hardwareInformation.CpuList?.FirstOrDefault()?.NumberOfCores ?? 0;
 
-        public string Terminal { get; private set; }
+        public string? ResolutionDescription => (hardwareInformation.VideoControllerList.FirstOrDefault() is VideoController v ? v.CurrentHorizontalResolution + "x" + v.CurrentVerticalResolution : "N/A");
 
-        public string CPUDescription { get; private set; }
+        public string? GPUDescription => hardwareInformation.VideoControllerList?.FirstOrDefault()?.Name;
 
-        public string CPUVendor { get; private set; }
+        
 
-        public string CPUModel { get; private set; }
-
-        public int CPUCores { get; private set; }
-
-        public int CPUSpeed { get; private set; }
-
-        public string GPUDescription { get; private set; }
-
-        public int MemoryTotal { get; private set; }
-
-        public int MemoryUsed { get; private set; }
-
-        public int MemoryFree { get; private set; }
-
-        public SystemInfo()
+        public string? RAMDescription
         {
-            HardwareInfo hwInfo = new HardwareInfo();
-
-            hwInfo.RefreshAll();
-
-            UserName = Environment.UserName;
-
-            ComputerName = Environment.MachineName;
-
-            OSName = hwInfo.OperatingSystem.Name ?? "Unknown";
-
-            OSVersion = hwInfo.OperatingSystem.VersionString ?? "Unknown";
-
-            OSArchitecture = RuntimeInformation.OSArchitecture.ToString();
-
-            OSDescription = RuntimeInformation.OSDescription;
-         
-            OSUptime = TimeSpan.FromMilliseconds(Environment.TickCount64);
-
-            Resolution = (hwInfo.VideoControllerList.FirstOrDefault() != null && hwInfo.VideoControllerList.FirstOrDefault()?.CurrentHorizontalResolution != null && hwInfo.VideoControllerList.FirstOrDefault()?.CurrentVerticalResolution != null) ? $"{hwInfo.VideoControllerList.FirstOrDefault()?.CurrentHorizontalResolution}x{hwInfo.VideoControllerList.FirstOrDefault()?.CurrentVerticalResolution}" : null;
-
-
-
-            Terminal = Environment.GetEnvironmentVariable("TERM_PROGRAM") ?? "Unknown";
-
-            CPUDescription = hwInfo.CpuList.FirstOrDefault()?.Description ?? "Unknown";
-
-            CPUVendor = hwInfo.CpuList.FirstOrDefault()?.Manufacturer ?? "Unknown";
-
-            CPUModel = hwInfo.CpuList.FirstOrDefault()?.Name ?? "Unknown";
-
-            CPUCores = (int)(hwInfo.CpuList.FirstOrDefault()?.NumberOfCores ?? 0);
-
-            CPUSpeed = (int)hwInfo.CpuList.FirstOrDefault()?.MaxClockSpeed == 0 ? (int)(hwInfo.CpuList.FirstOrDefault()?.CurrentClockSpeed) : (int)(hwInfo.CpuList.FirstOrDefault()?.MaxClockSpeed);
-
-            GPUDescription = hwInfo.VideoControllerList.FirstOrDefault()?.Description ?? "Unknown";
-
-            MemoryTotal = (int)(hwInfo.MemoryStatus.TotalPhysical / (1024 * 1024));
-
-            MemoryFree = (int)(hwInfo.MemoryStatus.AvailablePhysical / (1024 * 1024));
-
-            MemoryUsed = MemoryTotal - MemoryFree;
+            get
+            {
+                if (hardwareInformation.MemoryStatus != null)
+                {
+                    double totalRamInGB = Math.Round((double)hardwareInformation.MemoryStatus.TotalPhysical / (1024 * 1024), 0);
+                    double usedRamInGB = Math.Round((double)(hardwareInformation.MemoryStatus.TotalPhysical - hardwareInformation.MemoryStatus.AvailablePhysical) / (1024 * 1024), 0);
+                    return $"{usedRamInGB} MB / {totalRamInGB} MB";
+                }
+                else
+                {
+                    return "N/A";
+                }
+            }
         }
 
-        public string ToConsoleText()
+        public string? Shell
         {
-            return $"[bold]{UserName}@{ComputerName}[/]\n" +
-                new StringBuilder().Append('-', UserName.Length + ComputerName.Length + 1) + "\n" +
-                $"[bold]OS: [/] {OSDescription}\n" +
-                $"[bold]Version: [/] {OSVersion}\n" +
-                $"[bold]Uptime: [/] {OSUptime:d' day(s), 'h' hour(s), 'm} minute(s)\n" +
-                (Resolution != null ? $"[bold]Resolution: [/] {Resolution}\n" : "") +
-                $"[bold]Terminal: [/] {Terminal}\n" +
-                $"[bold]CPU: [/] {CPUModel.TrimEnd()} @ {Math.Round((double)CPUSpeed / 1000, 2, MidpointRounding.ToPositiveInfinity)} GHz\n" +
-                $"[bold]GPU: [/] {GPUDescription}\n" +
-                $"[bold]Memory: [/] {MemoryUsed} MB / {MemoryTotal} MB ({Math.Round(((double)MemoryUsed / (double)MemoryTotal) * 100, 1)}%)\n";
-           
+            get
+            {
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    return Environment.GetEnvironmentVariable("ComSpec") ?? "N/A";
+                }
+                else
+                {
+                    return Environment.GetEnvironmentVariable("SHELL") ?? "N/A";
+                }
+            }
+        }
+        public string? Terminal
+        {
+            get
+            {
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    return Environment.GetEnvironmentVariable("WT_SESSION") != null ? "Windows Terminal" : "N/A";
+                }
+                else
+                {
+                    return Environment.GetEnvironmentVariable("TERM") ?? "N/A";
+                }
+            }
+        }
+
+
+        protected HardwareInfo hardwareInformation;
+
+        protected SystemInformation()
+        {
+            hardwareInformation = new HardwareInfo();
+
+            hardwareInformation.RefreshAll();
+        }
+
+        public abstract void Print();
+    }
+
+    public class WindowsSystemInformation : SystemInformation
+    {
+        public override double CPUSpeed => (Math.Round((double)hardwareInformation.CpuList?.FirstOrDefault()?.MaxClockSpeed / 1024, 2, MidpointRounding.ToPositiveInfinity));
+
+        public WindowsSystemInformation() : base()
+        {
+            
         }
 
         public override void Print()
         {
+            string text = MarkupForrmatter.FormatAndMarkup($"{UserName}@{MachineName}",
+                new System.Collections.Generic.Dictionary<string, string>
+                {
+                    { "OS", OS },
+                    { "Version", OSVersion },
+                    { "Architecture", Architecture },
+                    { "Uptime", $"{(int)Uptime.TotalHours}h {Uptime.Minutes}m" },
+                    { "Shell", Shell ?? "N/A" },
+                    { "Terminal", Terminal ?? "N/A" },
+                    { "CPU", CPUDescription + " @ " + CPUSpeed + " GHz" ?? "N/A" },
+                    { "Cores", CPUCores.ToString() },
+                    { "GPU", GPUDescription ?? "N/A" },
+                    { "Resolution", ResolutionDescription ?? "N/A" },
+                    { "RAM", RAMDescription ?? "N/A" }
+                }, WindowsInteropHelpers.GetAccentColor());
+
+            Panel logoPanel = new Panel(new CanvasImage(Resources.WindowsLogo64px)
+               .Mutate(m => m.Resize(20, 20, KnownResamplers.NearestNeighbor)))
+               .NoBorder();
+
+            Panel contentPanel = new Panel(text).NoBorder().Expand();
+
+            var columns = new Columns(logoPanel, contentPanel);
+
+            columns.Collapse();
+
+            AnsiConsole.Write(columns);
+        }
+    }
+
+    public class LinuxSystemInformation : SystemInformation
+    {
+        public override double CPUSpeed => (Math.Round((double)hardwareInformation.CpuList?.FirstOrDefault()?.CurrentClockSpeed / 1024, 2, MidpointRounding.ToPositiveInfinity));
+        public LinuxSystemInformation() : base()
+        {
             
+        }
+       
+        public override void Print()
+        {
+            string text = MarkupForrmatter.FormatAndMarkup($"{UserName}@{MachineName}",
+                new System.Collections.Generic.Dictionary<string, string>
+                {
+                    { "OS", OS },
+                    { "Version", OSVersion },
+                    { "Architecture", Architecture },
+                    { "Uptime", $"{(int)Uptime.TotalHours}h {Uptime.Minutes}m" },
+                    { "Shell", Shell ?? "N/A" },
+                    { "Terminal", Terminal ?? "N/A" },
+                    { "CPU", CPUDescription + " @ " + CPUSpeed + " GHz" ?? "N/A" },
+                    { "Cores", CPUCores.ToString() },
+                    { "GPU", GPUDescription ?? "N/A" },
+                    { "Resolution", ResolutionDescription ?? "N/A" },
+                    { "RAM", RAMDescription ?? "N/A" }
+                });
+            Panel logoPanel = new Panel(new CanvasImage(Resources.LinuxLogo64px)
+               .Mutate(m => m.Resize(20, 20, KnownResamplers.NearestNeighbor)))
+               .NoBorder();
+
+            Panel contentPanel = new Panel(text).NoBorder().Expand();
+
+            var columns = new Columns(logoPanel, contentPanel);
+
+            columns.Collapse();
+
+            AnsiConsole.Write(columns);
         }
     }
 }
