@@ -27,4 +27,7 @@ jobs:
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v4.6.2
       with:
-        path: bin/Debug/net10.0/
+        path: | 
+          Sharpfetch/bin/Debug/net10.0/*
+          Sharpfetch/bin/Debug/net10.0/**/*
+        compression-level: 2
