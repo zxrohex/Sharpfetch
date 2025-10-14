@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.RegularExpressions;
 
 using Hardware.Info;
 
@@ -23,7 +24,7 @@ namespace Sharpfetch.Core
 
         public string OS => RuntimeInformation.OSDescription;
 
-        public string OSVersion =>  hardwareInformation.OperatingSystem.Version.ToString();
+        public string OSVersion => hardwareInformation.OperatingSystem.Version.ToString();
 
         public string Architecture => RuntimeInformation.OSArchitecture.ToString();
 
@@ -39,7 +40,46 @@ namespace Sharpfetch.Core
 
         public string? GPUDescription => hardwareInformation.VideoControllerList?.FirstOrDefault()?.Name;
 
-        
+
+        public string DiskDescription
+        {
+
+            get
+            {
+                string a = "";
+
+                if (hardwareInformation.DriveList != null && hardwareInformation.DriveList.Count > 0)
+                {
+                    foreach (var drive in hardwareInformation.DriveList)
+                    {
+                        foreach (var partition in drive.PartitionList)
+                        {
+                            
+
+                            foreach 
+                                (var volume in  partition.VolumeList)
+                            {
+
+                                if (volume.Name == "/" || volume.Name == @"C:" | (volume.Name.StartsWith("/mnt/") && volume.Name.Split("/").Length == 2))
+                                {
+                                    Console.WriteLine(volume.Name);
+
+
+                                    a += $"{volume.Name} {Math.Round((double)volume.FreeSpace / (1024 * 1024 * 1024), 2)} GB / {Math.Round((double)volume.Size / (1024 * 1024 * 1024), 2)} GB, ";
+                                }
+                            }
+                        }
+                    }
+       
+                }
+                else
+                {
+                    return "N/A";
+                }
+
+                return !string.IsNullOrEmpty(a) ? a : "N/A";
+            }
+        }
 
         public string? RAMDescription
         {
@@ -106,8 +146,10 @@ namespace Sharpfetch.Core
 
         public WindowsSystemInformation() : base()
         {
-            
+
         }
+
+
 
         public override void Print()
         {
@@ -124,7 +166,8 @@ namespace Sharpfetch.Core
                     { "Cores", CPUCores.ToString() },
                     { "GPU", GPUDescription ?? "N/A" },
                     { "Resolution", ResolutionDescription ?? "N/A" },
-                    { "RAM", RAMDescription ?? "N/A" }
+                    { "RAM", RAMDescription ?? "N/A" },
+                                        { "Disk", DiskDescription ?? "N/A" }
                 }, WindowsInteropHelpers.GetAccentColor());
 
             Panel logoPanel = new Panel(new CanvasImage(Resources.WindowsLogo64px)
@@ -146,9 +189,25 @@ namespace Sharpfetch.Core
         public override double CPUSpeed => (Math.Round((double)hardwareInformation.CpuList?.FirstOrDefault()?.CurrentClockSpeed / 1024, 2, MidpointRounding.ToPositiveInfinity));
         public LinuxSystemInformation() : base()
         {
-            
+
         }
-       
+        private List<string> ExtractRealDrives(string input)
+        {
+            List<string> result = new List<string>();
+
+            // Regex: match ONLY "/mnt/[a-z]" (Windows drive mounts)
+            Regex drivePattern = new Regex(@"/mnt/[a-zA-Z]\b\s+[0-9\.,]+\s+GB");
+
+            var matches = drivePattern.Matches(input);
+            foreach (Match match in matches)
+            {
+                // Filter out things like /mnt/wsl or /mnt/wslg or longer paths
+                if (Regex.IsMatch(match.Value, @"^/mnt/[a-zA-Z]\b"))
+                    result.Add(match.Value);
+            }
+
+            return result;
+        }
         public override void Print()
         {
             string text = MarkupForrmatter.FormatAndMarkup($"{UserName}@{MachineName}",
@@ -164,7 +223,8 @@ namespace Sharpfetch.Core
                     { "Cores", CPUCores.ToString() },
                     { "GPU", GPUDescription ?? "N/A" },
                     { "Resolution", ResolutionDescription ?? "N/A" },
-                    { "RAM", RAMDescription ?? "N/A" }
+                    { "RAM", RAMDescription ?? "N/A" },
+                                        { "Disk", DiskDescription ?? "N/A" }
                 });
             Panel logoPanel = new Panel(new CanvasImage(Resources.LinuxLogo64px)
                .Mutate(m => m.Resize(20, 20, KnownResamplers.NearestNeighbor)))

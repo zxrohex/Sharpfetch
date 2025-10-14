@@ -29,6 +29,7 @@ namespace Sharpfetch.CLI.Commands
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
                 LinuxSystemInformation linuxSystemInformation = new LinuxSystemInformation();
+
                 linuxSystemInformation.Print();
             }
            
