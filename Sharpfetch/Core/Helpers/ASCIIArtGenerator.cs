@@ -1,7 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using System.Text;
+﻿using System.Text;
+
+using NJsonSchema;
 
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -26,22 +25,17 @@ namespace Sharpfetch.Core.Helpers
         /// <param name="imagePath">Path to the source image file.</param>
         /// <param name="width">Target width in characters (default 100).</param>
         /// <param name="reverse">If true, reverses the brightness mapping.</param>
-        public string Generate(byte[] image, int width = 100, bool reverse = false)
+        public string Generate(byte[] image, int scale, bool reverse = false)
         {
             using Image<Rgb24> original = Image.Load<Rgb24>(image);
 
             // Maintain aspect ratio; 0.55 factor accounts for typical console character height/width ratio
-            int height = (int)(original.Height / (double)original.Width * width * 0.55);
-            if (height <= 0)
-            {
-                throw new ArgumentException("Calculated height is zero or negative. Choose a larger width or use a different image.");
-            }
 
             // Clone & resize (avoid mutating original if you might reuse it elsewhere)
             using Image<Rgb24> resized = original.Clone(ctx => ctx.Resize(new ResizeOptions
             {
-                Size = new Size(width, height),
-                Mode = ResizeMode.Max
+                Size = new Size(original.Width - (original.Height / scale) * 2, original.Height / scale),
+                Mode = ResizeMode.Stretch
             }));
 
             return ConvertToAscii(resized, reverse);
@@ -56,7 +50,6 @@ namespace Sharpfetch.Core.Helpers
             // Iterate rows efficiently
             image.ProcessPixelRows(accessor =>
             {
-               
                 for (int y = 0; y < accessor.Height; y++)
                 {
                     var rowSpan = accessor.GetRowSpan(y);

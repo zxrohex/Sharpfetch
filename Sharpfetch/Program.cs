@@ -1,8 +1,5 @@
 ﻿using System.Threading.Tasks;
-
 using Sharpfetch.CLI.Commands;
-
-using Spectre.Console;
 using Spectre.Console.Cli;
 
 namespace Sharpfetch
@@ -12,17 +9,14 @@ namespace Sharpfetch
         static async Task Main(string[] args)
         {
             var app = new CommandApp();
-
             app.Configure(cfg =>
             {
                 cfg.PropagateExceptions();
             });
 
-
-           
             app.SetDefaultCommand<BaseCommand>();
 
-            await app.RunAsync(args);    
+            await app.RunAsync(args);
         }
     }
 }

@@ -1,241 +1,209 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Text.RegularExpressions;
-
 using Hardware.Info;
-
 using Sharpfetch.CLI;
 using Sharpfetch.Core.Helpers;
 using Sharpfetch.Properties;
-
 using SixLabors.ImageSharp.Processing;
-
 using Spectre.Console;
 
 namespace Sharpfetch.Core
 {
-    public abstract class SystemInformation
+    public abstract class SystemInformation : CLIObject
     {
+        protected const string NotAvailable = "N/A";
+
+        private readonly HardwareInfo _hardware;
+
         public string MachineName => Environment.MachineName;
-
         public string UserName => Environment.UserName;
-
         public string OS => RuntimeInformation.OSDescription;
-
-        public string OSVersion => hardwareInformation.OperatingSystem.Version.ToString();
-
+        public string OSVersion => _hardware.OperatingSystem?.Version?.ToString() ?? NotAvailable;
         public string Architecture => RuntimeInformation.OSArchitecture.ToString();
-
         public TimeSpan Uptime => TimeSpan.FromMilliseconds(Environment.TickCount64);
 
-        public string? CPUDescription => hardwareInformation.CpuList?.FirstOrDefault()?.Name.TrimEnd();
+        public string? CPUDescription => _hardware.CpuList?.FirstOrDefault()?.Name?.Trim();
+        public int CPUCores => (int?)_hardware.CpuList?.FirstOrDefault()?.NumberOfCores ?? 0;
+        public abstract double CPUSpeed { get; } // GHz
 
-        public abstract double CPUSpeed { get; }
+        public string? GPUDescription => _hardware.VideoControllerList?.FirstOrDefault()?.Name;
 
-        public int CPUCores => (int?)hardwareInformation.CpuList?.FirstOrDefault()?.NumberOfCores ?? 0;
-
-        public string? ResolutionDescription => (hardwareInformation.VideoControllerList.FirstOrDefault() is VideoController v ? v.CurrentHorizontalResolution + "x" + v.CurrentVerticalResolution : "N/A");
-
-        public string? GPUDescription => hardwareInformation.VideoControllerList?.FirstOrDefault()?.Name;
-
-
-        public string DiskDescription
-        {
-
-            get
-            {
-                string a = "";
-
-                if (hardwareInformation.DriveList != null && hardwareInformation.DriveList.Count > 0)
-                {
-                    foreach (var drive in hardwareInformation.DriveList)
-                    {
-                        foreach (var partition in drive.PartitionList)
-                        {
-                            
-
-                            foreach 
-                                (var volume in  partition.VolumeList)
-                            {
-
-                                if (volume.Name == "/" || volume.Name == @"C:" | (volume.Name.StartsWith("/mnt/") && volume.Name.Split("/").Length == 2))
-                                {
-                                    Console.WriteLine(volume.Name);
-
-
-                                    a += $"{volume.Name} {Math.Round((double)volume.FreeSpace / (1024 * 1024 * 1024), 2)} GB / {Math.Round((double)volume.Size / (1024 * 1024 * 1024), 2)} GB, ";
-                                }
-                            }
-                        }
-                    }
-       
-                }
-                else
-                {
-                    return "N/A";
-                }
-
-                return !string.IsNullOrEmpty(a) ? a : "N/A";
-            }
-        }
-
-        public string? RAMDescription
+        public string? ResolutionDescription
         {
             get
             {
-                if (hardwareInformation.MemoryStatus != null)
-                {
-                    double totalRamInGB = Math.Round((double)hardwareInformation.MemoryStatus.TotalPhysical / (1024 * 1024), 0);
-                    double usedRamInGB = Math.Round((double)(hardwareInformation.MemoryStatus.TotalPhysical - hardwareInformation.MemoryStatus.AvailablePhysical) / (1024 * 1024), 0);
-                    return $"{usedRamInGB} MB / {totalRamInGB} MB";
-                }
-                else
-                {
-                    return "N/A";
-                }
+                var v = _hardware.VideoControllerList?.FirstOrDefault();
+                return (v?.CurrentHorizontalResolution > 0 && v?.CurrentVerticalResolution > 0)
+                    ? $"{v.CurrentHorizontalResolution}x{v.CurrentVerticalResolution}"
+                    : NotAvailable;
             }
         }
 
-        public string? Shell
+        public string DiskDescription => FilterVolumes();
+
+        protected abstract string FilterVolumes();
+
+        public string RAMDescription
+        {
+            get
+            {
+                var ms = _hardware.MemoryStatus;
+                if (ms == null) return NotAvailable;
+                double totalMB = ms.TotalPhysical / (1024d * 1024d);
+                double usedMB = (ms.TotalPhysical - ms.AvailablePhysical) / (1024d * 1024d);
+                return $"{Math.Round(usedMB):0} MB / {Math.Round(totalMB):0} MB";
+            }
+        }
+
+        public string Shell =>
+            RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                ? (Environment.GetEnvironmentVariable("ComSpec") ?? NotAvailable)
+                : (Environment.GetEnvironmentVariable("SHELL") ?? NotAvailable);
+
+        public string Terminal
         {
             get
             {
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
-                    return Environment.GetEnvironmentVariable("ComSpec") ?? "N/A";
+                    if (Environment.GetEnvironmentVariable("WT_SESSION") != null) return "Windows Terminal";
+                    if (Environment.GetEnvironmentVariable("TERM_PROGRAM") is { } tp && !string.IsNullOrWhiteSpace(tp))
+                        return tp;
+                    return NotAvailable;
                 }
-                else
-                {
-                    return Environment.GetEnvironmentVariable("SHELL") ?? "N/A";
-                }
+                return Environment.GetEnvironmentVariable("TERM") ?? NotAvailable;
             }
         }
-        public string? Terminal
-        {
-            get
-            {
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                {
-                    return Environment.GetEnvironmentVariable("WT_SESSION") != null ? "Windows Terminal" : "N/A";
-                }
-                else
-                {
-                    return Environment.GetEnvironmentVariable("TERM") ?? "N/A";
-                }
-            }
-        }
-
-
-        protected HardwareInfo hardwareInformation;
 
         protected SystemInformation()
         {
-            hardwareInformation = new HardwareInfo();
-
-            hardwareInformation.RefreshAll();
+            _hardware = new HardwareInfo();
+            _hardware.RefreshAll();
         }
 
-        public abstract void Print();
+        protected HardwareInfo Hardware => _hardware;
+
+        protected double ToGHz(uint? mhz)
+        {
+            if (mhz == null || mhz == 0) return 0;
+            // 1000 is closer to reported marketing frequencies than 1024 for MHz->GHz
+            return Math.Round(mhz.Value / 1000d, 2, MidpointRounding.AwayFromZero);
+        }
+
+        protected Dictionary<string, string> BuildCommonDictionary()
+        {
+            return new Dictionary<string, string>
+            {
+                { "OS", OS },
+                { "Version", OSVersion },
+                { "Architecture", Architecture },
+                { "Uptime", $"{(int)Uptime.TotalHours}h {Uptime.Minutes}m" },
+                { "Shell", Shell },
+                { "Terminal", Terminal },
+                { "CPU", (CPUDescription != null ? $"{CPUDescription} @ {CPUSpeed:0.##} GHz" : NotAvailable) },
+                { "Cores", CPUCores.ToString() },
+                { "GPU", GPUDescription ?? NotAvailable },
+                { "Resolution", ResolutionDescription ?? NotAvailable },
+                { "RAM", RAMDescription },
+                { "Disk", DiskDescription }
+            };
+        }
+
+        public static SystemInformation Create()
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                return new WindowsSystemInformation();
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                return new LinuxSystemInformation();
+
+            // Default to base Windows style if unknown
+            return new WindowsSystemInformation();
+        }
+
+        public override abstract void Print();
     }
 
-    public class WindowsSystemInformation : SystemInformation
+    public sealed class WindowsSystemInformation : SystemInformation
     {
-        public override double CPUSpeed => (Math.Round((double)hardwareInformation.CpuList?.FirstOrDefault()?.MaxClockSpeed / 1024, 2, MidpointRounding.ToPositiveInfinity));
+        public override double CPUSpeed =>
+            ToGHz(Hardware.CpuList?.FirstOrDefault()?.MaxClockSpeed ??
+                  Hardware.CpuList?.FirstOrDefault()?.CurrentClockSpeed);
 
-        public WindowsSystemInformation() : base()
+        protected override string FilterVolumes()
         {
+            var drives = DriveInfo.GetDrives()
+                .Where(d => d.DriveType == DriveType.Fixed && d.IsReady && d.Name.Length == 3);
 
+            return drives.Any()
+                ? string.Join("\n", drives.Select(d =>
+                {
+                    double sizeGB = d.TotalSize / (1024d * 1024d * 1024d);
+                    return $"{d.Name.TrimEnd('\\')} ({sizeGB:0.0} GB)";
+                }))
+                : NotAvailable;
         }
-
-
 
         public override void Print()
         {
-            string text = MarkupForrmatter.FormatAndMarkup($"{UserName}@{MachineName}",
-                new System.Collections.Generic.Dictionary<string, string>
-                {
-                    { "OS", OS },
-                    { "Version", OSVersion },
-                    { "Architecture", Architecture },
-                    { "Uptime", $"{(int)Uptime.TotalHours}h {Uptime.Minutes}m" },
-                    { "Shell", Shell ?? "N/A" },
-                    { "Terminal", Terminal ?? "N/A" },
-                    { "CPU", CPUDescription + " @ " + CPUSpeed + " GHz" ?? "N/A" },
-                    { "Cores", CPUCores.ToString() },
-                    { "GPU", GPUDescription ?? "N/A" },
-                    { "Resolution", ResolutionDescription ?? "N/A" },
-                    { "RAM", RAMDescription ?? "N/A" },
-                                        { "Disk", DiskDescription ?? "N/A" }
-                }, WindowsInteropHelpers.GetAccentColor());
+            var text = MarkupFormatter.FormatAndMarkup(
+                $"{UserName}@{MachineName}",
+                BuildCommonDictionary(),
+                WindowsInteropHelpers.GetAccentColor());
 
-            Panel logoPanel = new Panel(new CanvasImage(Resources.WindowsLogo64px)
-               .Mutate(m => m.Resize(20, 20, KnownResamplers.NearestNeighbor)))
-               .NoBorder();
+            var logoPanel = /*new Panel(
+                    new CanvasImage(Resources.WindowsLogo64px)
+                        .Mutate(m => m.Resize(20, 20, KnownResamplers.NearestNeighbor)))*/
+                new Panel(new ASCIIArtGenerator().Generate(Sharpfetch.Properties.Resources.WindowsLogo64px, 4))
+                .NoBorder();
 
-            Panel contentPanel = new Panel(text).NoBorder().Expand();
-
-            var columns = new Columns(logoPanel, contentPanel);
-
-            columns.Collapse();
-
+            var contentPanel = new Panel(text).NoBorder().Expand();
+            var columns = new Columns(logoPanel, new Rows(contentPanel, MarkupFormatter.GenerateTestBars())).Collapse();
             AnsiConsole.Write(columns);
         }
     }
 
-    public class LinuxSystemInformation : SystemInformation
+    public sealed class LinuxSystemInformation : SystemInformation
     {
-        public override double CPUSpeed => (Math.Round((double)hardwareInformation.CpuList?.FirstOrDefault()?.CurrentClockSpeed / 1024, 2, MidpointRounding.ToPositiveInfinity));
-        public LinuxSystemInformation() : base()
+        public override double CPUSpeed =>
+            ToGHz(Hardware.CpuList?.FirstOrDefault()?.CurrentClockSpeed ??
+                  Hardware.CpuList?.FirstOrDefault()?.MaxClockSpeed);
+
+        protected override string FilterVolumes()
         {
+            // Restrict to root and /mnt/<letter> mounts that are fixed (best effort)
+            var drives = DriveInfo.GetDrives()
+                .Where(d =>
+                    d.IsReady &&
+                    d.DriveType == DriveType.Fixed &&
+                    (d.Name == "/" || Regex.IsMatch(d.Name, @"^/mnt/[a-zA-Z]/?$")));
 
+            return drives.Any()
+                ? string.Join("\n", drives.Select(d =>
+                {
+                    double sizeGB = d.TotalSize / (1024d * 1024d * 1024d);
+                    return $"{d.Name.TrimEnd('/')} ({sizeGB:0.0} GB)";
+                }))
+                : NotAvailable;
         }
-        private List<string> ExtractRealDrives(string input)
-        {
-            List<string> result = new List<string>();
 
-            // Regex: match ONLY "/mnt/[a-z]" (Windows drive mounts)
-            Regex drivePattern = new Regex(@"/mnt/[a-zA-Z]\b\s+[0-9\.,]+\s+GB");
-
-            var matches = drivePattern.Matches(input);
-            foreach (Match match in matches)
-            {
-                // Filter out things like /mnt/wsl or /mnt/wslg or longer paths
-                if (Regex.IsMatch(match.Value, @"^/mnt/[a-zA-Z]\b"))
-                    result.Add(match.Value);
-            }
-
-            return result;
-        }
         public override void Print()
         {
-            string text = MarkupForrmatter.FormatAndMarkup($"{UserName}@{MachineName}",
-                new System.Collections.Generic.Dictionary<string, string>
-                {
-                    { "OS", OS },
-                    { "Version", OSVersion },
-                    { "Architecture", Architecture },
-                    { "Uptime", $"{(int)Uptime.TotalHours}h {Uptime.Minutes}m" },
-                    { "Shell", Shell ?? "N/A" },
-                    { "Terminal", Terminal ?? "N/A" },
-                    { "CPU", CPUDescription + " @ " + CPUSpeed + " GHz" ?? "N/A" },
-                    { "Cores", CPUCores.ToString() },
-                    { "GPU", GPUDescription ?? "N/A" },
-                    { "Resolution", ResolutionDescription ?? "N/A" },
-                    { "RAM", RAMDescription ?? "N/A" },
-                                        { "Disk", DiskDescription ?? "N/A" }
-                });
-            Panel logoPanel = new Panel(new CanvasImage(Resources.LinuxLogo64px)
-               .Mutate(m => m.Resize(20, 20, KnownResamplers.NearestNeighbor)))
-               .NoBorder();
+            var text = MarkupFormatter.FormatAndMarkup(
+                $"{UserName}@{MachineName}",
+                BuildCommonDictionary());
 
-            Panel contentPanel = new Panel(text).NoBorder().Expand();
+            var logoPanel = /*new Panel(
+                    new CanvasImage(Resources.LinuxLogo64px)
+                        .Mutate(m => m.Resize(20, 20, KnownResamplers.NearestNeighbor)))*/
+                new Panel(new ASCIIArtGenerator().Generate(Sharpfetch.Properties.Resources.LinuxLogo64px, 4))
+                .NoBorder();
 
-            var columns = new Columns(logoPanel, contentPanel);
-
-            columns.Collapse();
-
+            var contentPanel = new Panel(text).NoBorder().Expand();
+            var columns = new Columns(logoPanel, new Rows(contentPanel, MarkupFormatter.GenerateTestBars())).Collapse();
             AnsiConsole.Write(columns);
         }
     }

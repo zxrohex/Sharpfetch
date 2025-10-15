@@ -6,8 +6,8 @@
 	  <LangVersion>preview</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <AssemblyVersion>1.0.0.34</AssemblyVersion>
-    <FileVersion>1.0.0.34</FileVersion>
+    <AssemblyVersion>1.0.0.80</AssemblyVersion>
+    <FileVersion>1.0.0.80</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
