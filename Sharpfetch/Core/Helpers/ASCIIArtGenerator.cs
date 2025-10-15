@@ -59,7 +59,8 @@ namespace Sharpfetch.Core.Helpers
                         // Luminance (same coefficients as original)
                         double gray = 0.2126 * pixel.R + 0.7152 * pixel.G + 0.0722 * pixel.B;
                         int charIndex = (int)(gray / 255.0 * charLenMinus1);
-                        sb.Append(chars[charIndex]);
+
+                        sb.Append($"[rgb({pixel.R},{pixel.G},{pixel.B})]{chars[charIndex]}[/]");
                     }
                     sb.AppendLine();
                 }

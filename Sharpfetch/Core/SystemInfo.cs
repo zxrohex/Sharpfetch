@@ -185,7 +185,7 @@ namespace Sharpfetch.Core
                 ? string.Join("\n", drives.Select(d =>
                 {
                     double sizeGB = d.TotalSize / (1024d * 1024d * 1024d);
-                    return $"{d.Name.TrimEnd('/')} ({sizeGB:0.0} GB)";
+                    return $"{d.Name} ({sizeGB:0.0} GB)";
                 }))
                 : NotAvailable;
         }
