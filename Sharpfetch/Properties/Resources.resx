@@ -118,13 +118,37 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-  <data name="LinuxLogo64px" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\LinuxLogo64px.png;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  <data name="OSLogoArchLinux" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\ARL.png;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="WindowsLogo32px" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\WindowsLogo32px.png;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  <data name="OSLogoDebian" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\DEB.png;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="WindowsLogo64px" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\WindowsLogo64px.png;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  <data name="OSLogoUbuntu" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\UBT.png;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="OSLogoWinNew" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\WIN11.png;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="OSLogoWinOld" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\WIN.png;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="OSLogoFedora" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\FED.png;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="OSLogoOpenSUSE" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\SSE.png;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="OSLogoGentoo" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\GNT.png;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="OSLogoMacOS" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\MAC.png;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="OSLogoLinuxMint" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\MIN.png;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="OSLogoLinux" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\LIN.png;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
 </root>

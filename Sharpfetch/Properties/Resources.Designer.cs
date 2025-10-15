@@ -63,9 +63,9 @@ namespace Sharpfetch.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        public static byte[] LinuxLogo64px {
+        public static byte[] OSLogoArchLinux {
             get {
-                object obj = ResourceManager.GetObject("LinuxLogo64px", resourceCulture);
+                object obj = ResourceManager.GetObject("OSLogoArchLinux", resourceCulture);
                 return ((byte[])(obj));
             }
         }
@@ -73,9 +73,9 @@ namespace Sharpfetch.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        public static byte[] WindowsLogo32px {
+        public static byte[] OSLogoDebian {
             get {
-                object obj = ResourceManager.GetObject("WindowsLogo32px", resourceCulture);
+                object obj = ResourceManager.GetObject("OSLogoDebian", resourceCulture);
                 return ((byte[])(obj));
             }
         }
@@ -83,9 +83,89 @@ namespace Sharpfetch.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        public static byte[] WindowsLogo64px {
+        public static byte[] OSLogoFedora {
             get {
-                object obj = ResourceManager.GetObject("WindowsLogo64px", resourceCulture);
+                object obj = ResourceManager.GetObject("OSLogoFedora", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        public static byte[] OSLogoGentoo {
+            get {
+                object obj = ResourceManager.GetObject("OSLogoGentoo", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        public static byte[] OSLogoLinux {
+            get {
+                object obj = ResourceManager.GetObject("OSLogoLinux", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        public static byte[] OSLogoLinuxMint {
+            get {
+                object obj = ResourceManager.GetObject("OSLogoLinuxMint", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        public static byte[] OSLogoMacOS {
+            get {
+                object obj = ResourceManager.GetObject("OSLogoMacOS", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        public static byte[] OSLogoOpenSUSE {
+            get {
+                object obj = ResourceManager.GetObject("OSLogoOpenSUSE", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        public static byte[] OSLogoUbuntu {
+            get {
+                object obj = ResourceManager.GetObject("OSLogoUbuntu", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        public static byte[] OSLogoWinNew {
+            get {
+                object obj = ResourceManager.GetObject("OSLogoWinNew", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        public static byte[] OSLogoWinOld {
+            get {
+                object obj = ResourceManager.GetObject("OSLogoWinOld", resourceCulture);
                 return ((byte[])(obj));
             }
         }

@@ -6,6 +6,8 @@ using System.Text;
 using Spectre.Console;
 using Spectre.Console.Rendering;
 
+using static System.Net.Mime.MediaTypeNames;
+
 namespace Sharpfetch.Core.Helpers
 {
     public class MarkupFormatter
@@ -95,5 +97,30 @@ namespace Sharpfetch.Core.Helpers
 
             return canvas;
         }
+
+        public static IRenderable CreateLayout(IRenderable leftSide, IRenderable rightSide)
+        {
+            var columns = new Columns(leftSide, rightSide).Collapse();
+
+            return columns;
+        }
+
+
+
+        public static IRenderable CreateDefaultOverview(string leftSide, string rightSide, bool colorBarsAtBottom = true)
+        {
+            var logoPanel = /*new Panel(
+                    new CanvasImage(Resources.WindowsLogo64px)
+                        .Mutate(m => m.Resize(20, 20, KnownResamplers.NearestNeighbor)))*/
+               new Panel(leftSide)
+               .NoBorder();
+
+            var contentPanel = new Panel(rightSide).NoBorder().Expand().Padding(0, 0);
+
+            var columns = CreateLayout(logoPanel, colorBarsAtBottom ? new Rows(contentPanel, MarkupFormatter.GenerateTestBars()) : contentPanel);
+            return columns;
+        }
+
+
     }
 }

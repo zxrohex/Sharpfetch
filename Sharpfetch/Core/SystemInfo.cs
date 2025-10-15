@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using Hardware.Info;
 using Sharpfetch.CLI;
+using Sharpfetch.Core.Core.Linux;
 using Sharpfetch.Core.Helpers;
 using Sharpfetch.Properties;
 using SixLabors.ImageSharp.Processing;
@@ -154,15 +155,11 @@ namespace Sharpfetch.Core
                 BuildCommonDictionary(),
                 WindowsInteropHelpers.GetAccentColor());
 
-            var logoPanel = /*new Panel(
-                    new CanvasImage(Resources.WindowsLogo64px)
-                        .Mutate(m => m.Resize(20, 20, KnownResamplers.NearestNeighbor)))*/
-                new Panel(new ASCIIArtGenerator().Generate(Sharpfetch.Properties.Resources.WindowsLogo64px, 4))
-                .NoBorder();
+            var osLogoAscii = new ASCIIArtGenerator().Generate(OSLogoHelper.GetOSLogo(), 4);
 
-            var contentPanel = new Panel(text).NoBorder().Expand();
-            var columns = new Columns(logoPanel, new Rows(contentPanel, MarkupFormatter.GenerateTestBars())).Collapse();
-            AnsiConsole.Write(columns);
+
+            
+            AnsiConsole.Write(MarkupFormatter.CreateDefaultOverview(osLogoAscii, text));
         }
     }
 
@@ -171,6 +168,8 @@ namespace Sharpfetch.Core
         public override double CPUSpeed =>
             ToGHz(Hardware.CpuList?.FirstOrDefault()?.CurrentClockSpeed ??
                   Hardware.CpuList?.FirstOrDefault()?.MaxClockSpeed);
+
+        public string DistroName => Hardware.OperatingSystem.GetDistroName();
 
         protected override string FilterVolumes()
         {
@@ -196,15 +195,11 @@ namespace Sharpfetch.Core
                 $"{UserName}@{MachineName}",
                 BuildCommonDictionary());
 
-            var logoPanel = /*new Panel(
-                    new CanvasImage(Resources.LinuxLogo64px)
-                        .Mutate(m => m.Resize(20, 20, KnownResamplers.NearestNeighbor)))*/
-                new Panel(new ASCIIArtGenerator().Generate(Sharpfetch.Properties.Resources.LinuxLogo64px, 4))
-                .NoBorder();
+            var osLogoAscii = new ASCIIArtGenerator().Generate(OSLogoHelper.GetOSLogo(DistroName), 4);
 
-            var contentPanel = new Panel(text).NoBorder().Expand();
-            var columns = new Columns(logoPanel, new Rows(contentPanel, MarkupFormatter.GenerateTestBars())).Collapse();
-            AnsiConsole.Write(columns);
+
+
+            AnsiConsole.Write(MarkupFormatter.CreateDefaultOverview(osLogoAscii, text));
         }
     }
 }
