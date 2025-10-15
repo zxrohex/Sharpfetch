@@ -27,6 +27,7 @@ Refer to the implementation for exact, up-to-date behavior:
 
 Current runtime behavior (Windows & Linux):
 - Platform detection and platform-specific print routines.
+- OS / distro logo ASCII art rendering (limited selection of Linux distros, macOS, Windows 11 and 10 for <10).
 - Printed information includes:
   - `UserName@MachineName`
   - OS and OS version
@@ -36,6 +37,8 @@ Current runtime behavior (Windows & Linux):
   - CPU description, reported clock speed and core count
   - GPU description and screen resolution (when available)
   - RAM usage (used / total)
+  - Disk infos
+- Multi-color blocks / 8 color bar x2 (normal and dimmed) rendering
 - Uses `Hardware.Info` for hardware queries.
 - Uses `Spectre.Console` for terminal UI and `SixLabors.ImageSharp` for logo rendering.
 - Windows-specific accent color integration and logo handling when running on Windows.
@@ -43,11 +46,12 @@ Current runtime behavior (Windows & Linux):
 ### Future plans
 Planned improvements and additions include:
 - macOS support and implementation (currently untested and not implemented).
-- Better ASCII/ANSI logo art and additional logos for a wider range of distributions and Windows versions.
 - More reliable, stable, and broader information for:
   - Terminal / shell detection
   - Window manager / desktop environment
   - GUI vs headless environments
+  - Disks and partitions, especially on Linux
+  - Linux WM/DE infos and accent color fetching
 - Improved and broader fallbacks for special situations and environments (WSL, minimal containers, VMs).
 - More detailed information output (package managers, installed packages, sensors like temperatures/fans, battery health).
 - Performance improvements, reduced startup latency, and more robust refresh/update strategies.
@@ -96,7 +100,11 @@ I am using / utilizing Generative AI in the development process, but this is lim
 - Using / writing my own code before using Generative AI
 - Parts/areas outside of my current knowledge and skillset, which are not security-critical or relevant
 
-My guideline and personal belief is that Generative AI should be mostly and primarily used with one's self-made work.
+As an experiment and test of GitHub Copilot's Agent feature (with GPT-5 as the Agent model), I've let the Agent rebase/refactor/improve the entire codebase,
+which worked well enough to use it for further development, but still made the decision to create an new branch with the AI-enhanced/improved codebase, which is for now
+the default and main working branch.
+
+Still, my guideline and personal belief is that Generative AI should be mostly and primarily used with one's self-made work.
 
 Currently, the solely AI-generated contents in this project are:
 - Sharpfetch\Core\Helpers\ASCIIArtGenerator.cs (ASCII art generation)
