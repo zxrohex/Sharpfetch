@@ -1,7 +1,7 @@
 ﻿using System.Runtime.InteropServices;
 using System.Drawing;
 
-namespace Sharpfetch.Core.Helpers
+namespace Sharpfetch.Sys.Windows
 {
     public class WindowsInteropHelpers
     {

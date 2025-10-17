@@ -8,11 +8,13 @@ using Hardware.Info;
 using Sharpfetch.CLI;
 using Sharpfetch.Core.Core.Linux;
 using Sharpfetch.Core.Helpers;
+using Sharpfetch.Core.Sys.Linux;
+using Sharpfetch.Core.Sys.Windows;
 using Sharpfetch.Properties;
 using SixLabors.ImageSharp.Processing;
 using Spectre.Console;
 
-namespace Sharpfetch.Core
+namespace Sharpfetch.Core.Sys
 {
     public abstract class SystemInformation : CLIObject
     {
@@ -126,80 +128,5 @@ namespace Sharpfetch.Core
         }
 
         public override abstract void Print();
-    }
-
-    public sealed class WindowsSystemInformation : SystemInformation
-    {
-        public override double CPUSpeed =>
-            ToGHz(Hardware.CpuList?.FirstOrDefault()?.MaxClockSpeed ??
-                  Hardware.CpuList?.FirstOrDefault()?.CurrentClockSpeed);
-
-        protected override string FilterVolumes()
-        {
-            var drives = DriveInfo.GetDrives()
-                .Where(d => d.DriveType == DriveType.Fixed && d.IsReady && d.Name.Length == 3);
-
-            return drives.Any()
-                ? string.Join("\n", drives.Select(d =>
-                {
-                    double sizeGB = d.TotalSize / (1024d * 1024d * 1024d);
-                    return $"{d.Name.TrimEnd('\\')} ({sizeGB:0.0} GB)";
-                }))
-                : NotAvailable;
-        }
-
-        public override void Print()
-        {
-            var text = MarkupFormatter.FormatAndMarkup(
-                $"{UserName}@{MachineName}",
-                BuildCommonDictionary(),
-                WindowsInteropHelpers.GetAccentColor());
-
-            var osLogoAscii = new ASCIIArtGenerator().Generate(OSLogoHelper.GetOSLogo(), 4);
-
-
-            
-            AnsiConsole.Write(MarkupFormatter.CreateDefaultOverview(osLogoAscii, text));
-        }
-    }
-
-    public sealed class LinuxSystemInformation : SystemInformation
-    {
-        public override double CPUSpeed =>
-            ToGHz(Hardware.CpuList?.FirstOrDefault()?.CurrentClockSpeed ??
-                  Hardware.CpuList?.FirstOrDefault()?.MaxClockSpeed);
-
-        public string DistroName => Hardware.OperatingSystem.GetDistroName();
-
-        protected override string FilterVolumes()
-        {
-            // Restrict to root and /mnt/<letter> mounts that are fixed (best effort)
-            var drives = DriveInfo.GetDrives()
-                .Where(d =>
-                    d.IsReady &&
-                    d.DriveType == DriveType.Fixed &&
-                    (d.Name == "/" || Regex.IsMatch(d.Name, @"^/mnt/[a-zA-Z]/?$")));
-
-            return drives.Any()
-                ? string.Join("\n", drives.Select(d =>
-                {
-                    double sizeGB = d.TotalSize / (1024d * 1024d * 1024d);
-                    return $"{d.Name} ({sizeGB:0.0} GB)";
-                }))
-                : NotAvailable;
-        }
-
-        public override void Print()
-        {
-            var text = MarkupFormatter.FormatAndMarkup(
-                $"{UserName}@{MachineName}",
-                BuildCommonDictionary());
-
-            var osLogoAscii = new ASCIIArtGenerator().Generate(OSLogoHelper.GetOSLogo(DistroName), 4);
-
-
-
-            AnsiConsole.Write(MarkupFormatter.CreateDefaultOverview(osLogoAscii, text));
-        }
     }
 }
