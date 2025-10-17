@@ -7,14 +7,13 @@ using Hardware.Info;
 namespace Sharpfetch.Core.Core.Linux
 {
     /*
-     * Decided to not use it anymore as I think it's an better idea
-     * to implement these methods in the LinuxSystemInformation class directly,
-     * as the OS class is generic itself and isn't specific to one OS
+     * Not sure if this is needed and good coding practice
+     * So this will be unused but kept for now
      */
 
-    public static class OSExtensions
+    public class LinuxOSInformation
     {
-        public static string GetDistroName(this OS os)
+        public static string GetDistroName()
         {
             if (!OperatingSystem.IsLinux())
             {
@@ -23,7 +22,7 @@ namespace Sharpfetch.Core.Core.Linux
 
             try
             {
-                string[] osReleaseFile = System.IO.File.ReadAllLines("/etc/os-release");
+                string[] osReleaseFile = File.ReadAllLines("/etc/os-release");
 
                 foreach (var line in osReleaseFile)
                 {
@@ -39,6 +38,26 @@ namespace Sharpfetch.Core.Core.Linux
             catch (Exception ex)
             {
                 return $"Error retrieving distro name: {ex.Message}";
+            }
+        }
+
+        public static string GetKernelRelease()
+        {
+            if (!OperatingSystem.IsLinux())
+            {
+                throw new PlatformNotSupportedException("This method is only supported on Linux.");
+
+            }
+
+            try
+            {
+                string kernelRelease = File.ReadAllText("/proc/sys/kernel/osrelease").Trim();
+
+                return kernelRelease;
+            }
+            catch (Exception ex)
+            {
+                return $"Error retrieving kernel release: {ex.Message}";
             }
         }
     }

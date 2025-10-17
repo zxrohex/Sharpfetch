@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 
 using Sharpfetch.Core.Core.Linux;
 using Sharpfetch.Core.Helpers;
+using Sharpfetch.Core.Helpers.Extensions;
 
 using Spectre.Console;
 
@@ -16,7 +17,11 @@ namespace Sharpfetch.Core.Sys.Linux
             ToGHz(Hardware.CpuList?.FirstOrDefault()?.CurrentClockSpeed ??
                   Hardware.CpuList?.FirstOrDefault()?.MaxClockSpeed);
 
-        public string DistroName => Hardware.OperatingSystem.GetDistroName();
+        public string DistroName => File.ReadAllLines("/etc/os-release")
+            .FirstOrDefault(line => line.StartsWith("NAME="))?
+            .Substring("NAME=".Length).Trim('"') ?? "Unknown Linux Distribution";
+
+        public string KernelRelease => File.ReadAllText("/proc/sys/kernel/osrelease").Trim();
 
         protected override string FilterVolumes()
         {
@@ -36,6 +41,34 @@ namespace Sharpfetch.Core.Sys.Linux
                 : NotAvailable;
         }
 
+        protected override Dictionary<string, string> BuildCommonDictionary()
+        {
+            /*
+            Dictionary<string, string> baseDict = base.BuildCommonDictionary();
+
+            Dictionary<string, string> osDictPart = baseDict.Take(2).ToDictionary();
+
+            osDictPart.AddRange(new Dictionary<string, string>
+            {
+                { "Kernel", KernelRelease }
+            });
+
+            Dictionary<string, string> remainderDictPart = baseDict.Skip(2).ToDictionary();
+
+            return osDictPart.Concat(remainderDictPart).ToDictionary();
+            */
+
+            Dictionary<string, string> baseDict = base.BuildCommonDictionary();
+
+            baseDict.AddRangeAt(2, new Dictionary<string, string>
+            {
+                { "Kernel", KernelRelease }
+            });
+
+            return baseDict;    
+        }
+
+
         public override void Print()
         {
             var text = MarkupFormatter.FormatAndMarkup(
@@ -43,8 +76,6 @@ namespace Sharpfetch.Core.Sys.Linux
                 BuildCommonDictionary());
 
             var osLogoAscii = new ASCIIArtGenerator().Generate(OSLogoHelper.GetOSLogo(DistroName), 4);
-
-
 
             AnsiConsole.Write(MarkupFormatter.CreateDefaultOverview(osLogoAscii, text));
         }

@@ -6,8 +6,6 @@ using System.Text;
 using Spectre.Console;
 using Spectre.Console.Rendering;
 
-using static System.Net.Mime.MediaTypeNames;
-
 namespace Sharpfetch.Core.Helpers
 {
     public class MarkupFormatter

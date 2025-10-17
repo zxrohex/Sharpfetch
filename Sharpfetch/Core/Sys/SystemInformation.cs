@@ -23,14 +23,24 @@ namespace Sharpfetch.Core.Sys
         private readonly HardwareInfo _hardware;
 
         public string MachineName => Environment.MachineName;
+
         public string UserName => Environment.UserName;
+
         public string OS => RuntimeInformation.OSDescription;
-        public string OSVersion => _hardware.OperatingSystem?.Version?.ToString() ?? NotAvailable;
+
+        // _hardware.OperatingSystem?.Version?.ToString()
+        public string OSVersion => _hardware.OperatingSystem.VersionString ?? NotAvailable;
+
         public string Architecture => RuntimeInformation.OSArchitecture.ToString();
+
         public TimeSpan Uptime => TimeSpan.FromMilliseconds(Environment.TickCount64);
 
         public string? CPUDescription => _hardware.CpuList?.FirstOrDefault()?.Name?.Trim();
+
         public int CPUCores => (int?)_hardware.CpuList?.FirstOrDefault()?.NumberOfCores ?? 0;
+
+        public int CPUThreads => (int?)_hardware.CpuList.FirstOrDefault()?.NumberOfLogicalProcessors ?? 0;
+
         public abstract double CPUSpeed { get; } // GHz
 
         public string? GPUDescription => _hardware.VideoControllerList?.FirstOrDefault()?.Name;
@@ -94,10 +104,10 @@ namespace Sharpfetch.Core.Sys
         {
             if (mhz == null || mhz == 0) return 0;
             // 1000 is closer to reported marketing frequencies than 1024 for MHz->GHz
-            return Math.Round(mhz.Value / 1000d, 2, MidpointRounding.AwayFromZero);
+            return Math.Round(mhz.Value / 1000d, 2, MidpointRounding.ToPositiveInfinity);
         }
 
-        protected Dictionary<string, string> BuildCommonDictionary()
+        protected virtual Dictionary<string, string> BuildCommonDictionary()
         {
             return new Dictionary<string, string>
             {
@@ -108,7 +118,7 @@ namespace Sharpfetch.Core.Sys
                 { "Shell", Shell },
                 { "Terminal", Terminal },
                 { "CPU", (CPUDescription != null ? $"{CPUDescription} @ {CPUSpeed:0.##} GHz" : NotAvailable) },
-                { "Cores", CPUCores.ToString() },
+                { "Cores/Threads", $"{CPUCores} Cores / {CPUThreads} Threads" },
                 { "GPU", GPUDescription ?? NotAvailable },
                 { "Resolution", ResolutionDescription ?? NotAvailable },
                 { "RAM", RAMDescription },

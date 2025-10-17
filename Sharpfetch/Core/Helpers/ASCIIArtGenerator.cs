@@ -22,16 +22,10 @@ namespace Sharpfetch.Core.Helpers
         /// <summary>
         /// Generates an ASCII representation of the image at imagePath.
         /// </summary>
-        /// <param name="imagePath">Path to the source image file.</param>
-        /// <param name="width">Target width in characters (default 100).</param>
-        /// <param name="reverse">If true, reverses the brightness mapping.</param>
         public string Generate(byte[] image, int scale, bool reverse = false)
         {
             using Image<Rgb24> original = Image.Load<Rgb24>(image);
 
-            // Maintain aspect ratio; 0.55 factor accounts for typical console character height/width ratio
-
-            // Clone & resize (avoid mutating original if you might reuse it elsewhere)
             using Image<Rgb24> resized = original.Clone(ctx => ctx.Resize(new ResizeOptions
             {
                 Size = new Size(original.Width - (original.Height / scale) * 2, original.Height / scale),
@@ -60,7 +54,7 @@ namespace Sharpfetch.Core.Helpers
                         double gray = 0.2126 * pixel.R + 0.7152 * pixel.G + 0.0722 * pixel.B;
                         int charIndex = (int)(gray / 255.0 * charLenMinus1);
 
-                        sb.Append($"[rgb({pixel.R},{pixel.G},{pixel.B})]{chars[charIndex]}[/]");
+                        sb.Append($"[bold rgb({pixel.R},{pixel.G},{pixel.B})]{chars[charIndex]}[/]");
                     }
                     sb.AppendLine();
                 }
