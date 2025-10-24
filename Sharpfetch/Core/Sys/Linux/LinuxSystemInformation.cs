@@ -75,7 +75,7 @@ namespace Sharpfetch.Core.Sys.Linux
                 $"{UserName}@{MachineName}",
                 BuildCommonDictionary());
 
-            var osLogoAscii = new ASCIIArtGenerator().Generate(OSLogoHelper.GetOSLogo(DistroName), 4);
+            var osLogoAscii = new ASCIIArtGenerator(" .:/+osydmNM").Generate(OSLogoHelper.GetOSLogo(DistroName), (AnsiConsole.Profile.Width + 2) / 3);
 
             AnsiConsole.Write(MarkupFormatter.CreateDefaultOverview(osLogoAscii, text));
         }

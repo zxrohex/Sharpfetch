@@ -4,14 +4,18 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
+
 using Hardware.Info;
+
 using Sharpfetch.CLI;
 using Sharpfetch.Core.Core.Linux;
 using Sharpfetch.Core.Helpers;
 using Sharpfetch.Core.Sys.Linux;
 using Sharpfetch.Core.Sys.Windows;
 using Sharpfetch.Properties;
+
 using SixLabors.ImageSharp.Processing;
+
 using Spectre.Console;
 
 namespace Sharpfetch.Core.Sys
@@ -22,41 +26,193 @@ namespace Sharpfetch.Core.Sys
 
         private readonly HardwareInfo _hardware;
 
-        public string MachineName => Environment.MachineName;
-
-        public string UserName => Environment.UserName;
-
-        public string OS => RuntimeInformation.OSDescription;
-
-        // _hardware.OperatingSystem?.Version?.ToString()
-        public string OSVersion => _hardware.OperatingSystem.VersionString ?? NotAvailable;
-
-        public string Architecture => RuntimeInformation.OSArchitecture.ToString();
-
-        public TimeSpan Uptime => TimeSpan.FromMilliseconds(Environment.TickCount64);
-
-        public string? CPUDescription => _hardware.CpuList?.FirstOrDefault()?.Name?.Trim();
-
-        public int CPUCores => (int?)_hardware.CpuList?.FirstOrDefault()?.NumberOfCores ?? 0;
-
-        public int CPUThreads => (int?)_hardware.CpuList.FirstOrDefault()?.NumberOfLogicalProcessors ?? 0;
-
-        public abstract double CPUSpeed { get; } // GHz
-
-        public string? GPUDescription => _hardware.VideoControllerList?.FirstOrDefault()?.Name;
-
-        public string? ResolutionDescription
+        public string MachineName
         {
             get
             {
-                var v = _hardware.VideoControllerList?.FirstOrDefault();
-                return (v?.CurrentHorizontalResolution > 0 && v?.CurrentVerticalResolution > 0)
-                    ? $"{v.CurrentHorizontalResolution}x{v.CurrentVerticalResolution}"
-                    : NotAvailable;
+                try
+                {
+                    return Environment.MachineName;
+                }
+                catch (Exception ex)
+                {
+                    return $"Error ({ex.GetType().ToString().EscapeMarkup()})";
+                }
             }
         }
 
-        public string DiskDescription => FilterVolumes();
+        public string UserName
+        {
+            get
+            {
+                try
+                {
+                    return Environment.UserName;
+                }
+                catch (Exception ex)
+                {
+                    return $"Error ({ex.GetType().ToString().EscapeMarkup()})";
+                }
+            }
+        }
+
+        public virtual string OS
+        {
+            get
+            {
+                try
+                {
+                    return RuntimeInformation.OSDescription;
+                }
+                catch (Exception ex)
+                {
+                    return $"Error ({ex.GetType().ToString().EscapeMarkup()})";
+                }
+            }
+        }
+
+        // _hardware.OperatingSystem?.Version?.ToString()
+        public string OSVersion
+        {
+            get
+            {
+                try
+                {
+                    return _hardware.OperatingSystem.VersionString ?? NotAvailable;
+                }
+                catch (Exception ex)
+                {
+                    return $"Error ({ex.GetType().ToString().EscapeMarkup()})";
+                }
+            }
+        }
+
+        public string Architecture
+        {
+            get
+            {
+                try
+                {
+                    return RuntimeInformation.OSArchitecture.ToString();
+                }
+                catch (Exception ex)
+                {
+                    return $"Error ({ex.GetType().ToString().EscapeMarkup()})";
+                }
+
+            }
+        }
+
+        public TimeSpan? Uptime
+        {
+            get
+            {
+                try
+                {
+                    return TimeSpan.FromMilliseconds(Environment.TickCount64);
+                }
+                catch (Exception ex)
+                {
+                    return null; // will handle it differently
+                }
+            }
+        }
+
+        public string? CPUDescription
+        {
+            get
+            {
+                try
+                {
+                    return _hardware.CpuList?.FirstOrDefault()?.Name?.Trim();
+                }
+                catch (Exception ex)
+                {
+                    return $"Error ({ex.GetType().ToString().EscapeMarkup()})";
+                }
+
+
+            }
+        }
+
+        public int? CPUCores
+        {
+            get
+            {
+                try
+                {
+                    return (int?)_hardware.CpuList?.FirstOrDefault()?.NumberOfCores ?? 0;
+                }
+                catch (Exception ex)
+                {
+                    return null;
+                }
+            }
+        }
+
+        public int? CPUThreads
+        {
+            get
+            {
+                try
+                {
+                    return (int?)_hardware.CpuList.FirstOrDefault()?.NumberOfLogicalProcessors ?? 0;
+                }
+                catch (Exception ex)
+                {
+                    return null;
+                }
+
+            }
+        }
+
+        public abstract double CPUSpeed { get; } // GHz
+
+        public string GPUDescription
+        {
+            get
+            {
+                try
+                {
+                    return _hardware.VideoControllerList?.FirstOrDefault()?.Name ?? "N/A";
+                }
+                catch (Exception ex)
+                {
+                    return $"Error ({ex.GetType().ToString().EscapeMarkup()})";
+                }
+
+
+            }
+        }
+
+        public string ResolutionDescription
+        {
+            get
+            {
+                try
+                {
+                    var v = _hardware.VideoControllerList?.FirstOrDefault();
+
+                    return (v?.CurrentHorizontalResolution > 0 && v?.CurrentVerticalResolution > 0)
+                        ? $"{v.CurrentHorizontalResolution}x{v.CurrentVerticalResolution}"
+                        : "N/A";
+                }
+                catch (Exception ex)
+                {
+                    return $"Error ({ex.GetType().ToString().EscapeMarkup()})";
+                }
+            }
+        }
+
+        public string DiskDescription
+        {
+            get
+            {
+               
+
+                return FilterVolumes();
+            }
+        }
 
         protected abstract string FilterVolumes();
 
@@ -64,31 +220,59 @@ namespace Sharpfetch.Core.Sys
         {
             get
             {
-                var ms = _hardware.MemoryStatus;
-                if (ms == null) return NotAvailable;
-                double totalMB = ms.TotalPhysical / (1024d * 1024d);
-                double usedMB = (ms.TotalPhysical - ms.AvailablePhysical) / (1024d * 1024d);
-                return $"{Math.Round(usedMB):0} MB / {Math.Round(totalMB):0} MB";
+                try
+                {
+                    var ms = _hardware.MemoryStatus;
+                    if (ms == null) return NotAvailable;
+                    double totalMB = ms.TotalPhysical / (1024d * 1024d);
+                    double usedMB = (ms.TotalPhysical - ms.AvailablePhysical) / (1024d * 1024d);
+                    return $"{Math.Round(usedMB):0} MB / {Math.Round(totalMB):0} MB";
+                }
+                catch (Exception ex)
+                {
+                    return $"Error ({ex.GetType().ToString().EscapeMarkup()})";
+                }
             }
         }
 
-        public string Shell =>
-            RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-                ? (Environment.GetEnvironmentVariable("ComSpec") ?? NotAvailable)
-                : (Environment.GetEnvironmentVariable("SHELL") ?? NotAvailable);
+        public string Shell
+        {
+            get
+            {
+                try
+                {
+                    return RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                        ? (Environment.GetEnvironmentVariable("ComSpec") ?? NotAvailable)
+                        : (Environment.GetEnvironmentVariable("SHELL") ?? NotAvailable);
+                }
+                catch (Exception ex)
+                {
+                    return $"Error ({ex.GetType().ToString().EscapeMarkup()})";
+                }
+
+            }
+        }
 
         public string Terminal
         {
             get
             {
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                try
                 {
-                    if (Environment.GetEnvironmentVariable("WT_SESSION") != null) return "Windows Terminal";
-                    if (Environment.GetEnvironmentVariable("TERM_PROGRAM") is { } tp && !string.IsNullOrWhiteSpace(tp))
-                        return tp;
-                    return NotAvailable;
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                    {
+                        if (Environment.GetEnvironmentVariable("WT_SESSION") != null) return "Windows Terminal";
+                        if (Environment.GetEnvironmentVariable("TERM_PROGRAM") is { } tp && !string.IsNullOrWhiteSpace(tp))
+                            return tp;
+                        return NotAvailable;
+                    }
+                    return Environment.GetEnvironmentVariable("TERM") ?? NotAvailable;
                 }
-                return Environment.GetEnvironmentVariable("TERM") ?? NotAvailable;
+                catch (Exception ex)
+                {
+                    return $"Error ({ex.GetType().ToString().EscapeMarkup()})";
+
+                }
             }
         }
 
@@ -114,13 +298,13 @@ namespace Sharpfetch.Core.Sys
                 { "OS", OS },
                 { "Version", OSVersion },
                 { "Architecture", Architecture },
-                { "Uptime", $"{(int)Uptime.TotalHours}h {Uptime.Minutes}m" },
+                { "Uptime", Uptime != null ? $"{(int?)Uptime?.TotalHours}h {Uptime?.Minutes}m" : "N/A"},
                 { "Shell", Shell },
                 { "Terminal", Terminal },
-                { "CPU", (CPUDescription != null ? $"{CPUDescription} @ {CPUSpeed:0.##} GHz" : NotAvailable) },
-                { "Cores/Threads", $"{CPUCores} Cores / {CPUThreads} Threads" },
-                { "GPU", GPUDescription ?? NotAvailable },
-                { "Resolution", ResolutionDescription ?? NotAvailable },
+                { "CPU", (CPUDescription != null ? $"{CPUDescription} @ {CPUSpeed:0.##} GHz" : "N/A") },
+                { "Cores/Threads", $"{CPUCores ?? -1} Cores / {CPUThreads ?? -1} Threads" },
+                { "GPU", GPUDescription ?? "N/A" },
+                { "Resolution", ResolutionDescription ?? "N/A" },
                 { "RAM", RAMDescription },
                 { "Disk", DiskDescription }
             };

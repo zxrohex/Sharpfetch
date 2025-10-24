@@ -6,15 +6,15 @@
 	  <LangVersion>preview</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <AssemblyVersion>1.0.0.95</AssemblyVersion>
-    <FileVersion>1.0.0.95</FileVersion>
+    <AssemblyVersion>1.0.0.137</AssemblyVersion>
+    <FileVersion>1.0.0.137</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Hardware.Info" Version="101.1.0" />
-    <PackageReference Include="Spectre.Console" Version="0.52.1-preview.0.4" />
-    <PackageReference Include="Spectre.Console.Cli" Version="0.52.1-preview.0.4" />
-    <PackageReference Include="Spectre.Console.ImageSharp" Version="0.52.1-preview.0.4" />
+    <PackageReference Include="Spectre.Console" Version="0.52.1-preview.0.5" />
+    <PackageReference Include="Spectre.Console.Cli" Version="0.52.1-preview.0.5" />
+    <PackageReference Include="Spectre.Console.ImageSharp" Version="0.52.1-preview.0.5" />
   </ItemGroup>
 
   <ItemGroup>
